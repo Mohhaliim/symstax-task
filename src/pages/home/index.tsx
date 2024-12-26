@@ -1,3 +1,4 @@
+import EmployeesTable from "@/components/employeesTable";
 import Navbar from "@/components/navbar"
 import styled from 'styled-components';
 
@@ -10,7 +11,7 @@ export default function Home() {
     return (
         <PageWrapper>
             <Navbar />
-            <h1>Home</h1>
+            <EmployeesTable />
         </PageWrapper>
     )
 }

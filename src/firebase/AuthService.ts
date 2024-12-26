@@ -19,7 +19,6 @@ export const firebaseSignIn = async ({ email, password }: FormValues) => {
     email,
     password
   );
-  console.log(result)
   return result;
 };
 
