@@ -1,36 +1,44 @@
-import { useEffect } from 'react'
-import { onAuthStateChanged } from 'firebase/auth'
-import { useDispatch } from 'react-redux'
-import {useNavigate } from 'react-router-dom'
+import { useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useDispatch } from 'react-redux';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-import { setLoading, setUser } from '@/store/slices/authSlice'
-import { firebaseAuth } from '@/firebase/BaseConfig'
+import { setLoading, setUser } from '@/store/slices/authSlice';
+import { firebaseAuth } from '@/firebase/BaseConfig';
 
 const AuthStateHandler = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    useEffect(() => {
-      dispatch(setLoading(true));
+  useEffect(() => {
+    dispatch(setLoading(true));
 
-      const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-        if (user) {
-          dispatch(setUser({
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      if (user) {
+        dispatch(
+          setUser({
             uid: user.uid,
-            email: user.email!
-          }));
+            email: user.email!,
+          })
+        );
+
+        if (['/login', '/register'].includes(location.pathname)) {
           navigate('/');
-        } else {
-          dispatch(setUser(null));
-          navigate('/login'); //
         }
-        dispatch(setLoading(false));
-      });
+      } else {
+        dispatch(setUser(null));
+        if (!['/login', '/register'].includes(location.pathname)) {
+          navigate('/login');
+        }
+      }
+      dispatch(setLoading(false));
+    });
 
-      return () => unsubscribe();
-    }, [dispatch, navigate]);
+    return () => unsubscribe();
+  }, [dispatch, navigate]);
 
-    return null;
-  };
+  return null;
+};
 
-  export default AuthStateHandler
+export default AuthStateHandler;
