@@ -27,7 +27,13 @@ const CardWrapper = styled.div`
   align-items: center;
   max-width: 600px;
   height: fit-content;
-  gap: 1rem
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+  }
 `;
 
 const LabelDiv = styled.div`
@@ -52,7 +58,7 @@ const EmailWrapper = styled.div`
   display: flex;
   gap: 8px;
   align-items: center;
-  grid-column: span 2
+  grid-column: span 2;
 `;
 
 const ViewEmployee = ({employee, setOpenViewDialog}: {employee: Employee, setOpenViewDialog: React.Dispatch<React.SetStateAction<boolean>>}) => {

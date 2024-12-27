@@ -106,5 +106,3 @@ const DeleteEmployee = ({employee, setOpenDeleteDialog}: {employee: Employee, se
 };
 
 export default DeleteEmployee;
-
-/*  */

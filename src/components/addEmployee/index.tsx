@@ -67,8 +67,7 @@ const CardWrapper = styled.div`
   padding-block: 30px;
   border-radius: 5px;
   box-shadow: 0 1px 10px -1px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
   justify-content: space-between;
   align-items: center;
   max-width: 600px;
@@ -97,6 +96,7 @@ const StyledSelect = styled(Field)`
   border-radius: 4px;
   font-size: 16px;
   background-color: white;
+  width: 100%;
 `;
 
 const StyledError = styled.div`

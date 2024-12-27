@@ -1,22 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  TablePagination
-} from '@mui/material';
+import { useState, useEffect } from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { Paper, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { setEmployees, setTotalCount, setError, setLoading } from '@/store/slices/employeesSlice';
-import {getEmployees} from '@/firebase/EmployeeService';
-import { RootState, Employee} from "@/types";
+import { getEmployees } from '@/firebase/EmployeeService';
+import { RootState, Employee } from "@/types";
+
 import ViewEmployee from '@/components/viewEmployee';
 import DeleteEmployee from '@/components/deleteEmployee';
 import EditEmployee from '@/components/editEmployee';
@@ -29,6 +21,10 @@ const EmployeesTableWrapper = styled.div`
     display: flex;
     flex-direction: column;
     align-items: start;
+
+    @media (max-width: 768px) {
+        margin-top: 60px;
+    }
 `;
 
 const AddEmployeeButton = styled.button`
@@ -39,46 +35,48 @@ const AddEmployeeButton = styled.button`
     border-radius: 4px;
     cursor: pointer;
     margin-bottom: 20px;
-    self: flex-start;
+    align-self: flex-start;
+
+    &:hover {
+        background-color: #45a049;
+    }
 `;
 
 const EmployeesTable = () => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
     const dispatch = useDispatch();
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+
     const [openAddDialog, setOpenAddDialog] = useState(false);
     const [openEditDialog, setOpenEditDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openViewDialog, setOpenViewDialog] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+    const [paginationModel, setPaginationModel] = useState({
+        page: 0,
+        pageSize: 5,
+    });
+
     const employees = useSelector((state: RootState) => state.employees.employees);
     const totalCount = useSelector((state: RootState) => state.employees.totalCount);
 
     useEffect(() => {
-        handleGetEmployees(page, rowsPerPage)
-    }, [page, rowsPerPage])
+        handleGetEmployees(paginationModel.page, paginationModel.pageSize);
+    }, [paginationModel]);
 
-    const handleGetEmployees = async (page: number, rowsPerPage: number) => {
+    const handleGetEmployees = async (page: number, pageSize: number) => {
         dispatch(setLoading(true));
-
         try {
-            const result = await getEmployees(page, rowsPerPage);
+            const result = await getEmployees(page, pageSize);
+            console.log(result)
             dispatch(setEmployees(result.employees));
             dispatch(setTotalCount(result.totalCount));
-            dispatch(setLoading(false));
-        }catch(error) {
+        } catch(error) {
             dispatch(setError(error instanceof Error ? error.message : 'An unknown error occurred'));
+        } finally {
             dispatch(setLoading(false));
         }
-    }
-
-    const handleChangePage = (_event: unknown, newPage: number) => {
-        setPage(newPage);
-      };
-
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
     };
 
     const handleView = (employee: Employee) => {
@@ -89,67 +87,171 @@ const EmployeesTable = () => {
     const handleEdit = (employee: Employee) => {
         setSelectedEmployee(employee);
         setOpenEditDialog(true);
-     };
+    };
 
-     const handleDelete = (employee: Employee) => {
+    const handleDelete = (employee: Employee) => {
         setSelectedEmployee(employee);
         setOpenDeleteDialog(true);
-      };
+    };
+
+    const getColumns = (): GridColDef[] => {
+        const baseColumns: GridColDef[] = [
+            {
+                field: 'name',
+                headerName: 'Name',
+                flex: 1,
+                minWidth: 150
+            }
+        ];
+
+        if (!isMobile) {
+            baseColumns.push(
+                {
+                    field: 'department',
+                    headerName: 'Department',
+                    flex: 1,
+                    minWidth: 150
+                }
+            );
+        }
+
+        if (!isTablet) {
+            baseColumns.push(
+                {
+                    field: 'role',
+                    headerName: 'Role',
+                    flex: 1,
+                    minWidth: 150
+                },
+                {
+                    field: 'phone',
+                    headerName: 'Phone',
+                    flex: 1,
+                    minWidth: 150
+                }
+            );
+        }
+
+        if (!isMobile) {
+            baseColumns.push({
+                field: 'email',
+                headerName: 'Email',
+                flex: 1,
+                minWidth: 200
+            });
+        }
+
+        baseColumns.push({
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 1,
+            minWidth: 150,
+            sortable: false,
+            renderCell: (params) => (
+                <>
+                    <IconButton onClick={() => handleView(params.row)} size="small">
+                        <ViewIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleEdit(params.row)} size="small">
+                        <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(params.row)} size="small">
+                        <DeleteIcon />
+                    </IconButton>
+                </>
+            ),
+        });
+
+        return baseColumns;
+    };
 
     return (
         <EmployeesTableWrapper>
-            <AddEmployeeButton onClick={() => setOpenAddDialog(!openAddDialog)}>Add Employee</AddEmployeeButton>
-            <TableContainer component={Paper}>
-                <Table>
-                <TableHead>
-                    <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Department</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Phone</TableCell>
-                    <TableCell>Actions</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {employees.map((employee) => (
-                    <TableRow key={employee.id}>
-                        <TableCell>{employee.name}</TableCell>
-                        <TableCell>{employee.department}</TableCell>
-                        <TableCell>{employee.role}</TableCell>
-                        <TableCell>{employee.email}</TableCell>
-                        <TableCell>{employee.phone}</TableCell>
-                        <TableCell>
-                        <IconButton onClick={() => handleView(employee)}>
-                            <ViewIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleEdit(employee)}>
-                            <EditIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleDelete(employee)}>
-                            <DeleteIcon />
-                        </IconButton>
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-                </Table>
-                <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={totalCount}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+            <AddEmployeeButton onClick={() => setOpenAddDialog(true)}>
+                Add Employee
+            </AddEmployeeButton>
+            <Paper
+            sx={{
+                width: '100%',
+                height: 'fit-content',
+                maxWidth: {
+                    xs: '100%',
+                    sm: '100%',
+                    md: '90%',
+                    lg: '100%'
+                },
+                margin: '0 auto'
+            }}
+            >
+                <DataGrid
+                    rows={employees}
+                    columns={getColumns()}
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
+                    pageSizeOptions={[5, 10, 25]}
+                    rowCount={totalCount}
+                    paginationMode="server"
+                    disableRowSelectionOnClick
+                    disableColumnFilter
+                    sx={{
+                        border: 'none',
+                        '& .MuiDataGrid-main': {
+                            border: 'none'
+                        },
+                        '& .MuiDataGrid-cell': {
+                            borderBottom: '1px solid #f0f0f0',
+                            borderColor: '#f0f0f0'
+                        },
+                        '& .MuiDataGrid-columnHeaders': {
+                            backgroundColor: '#4CAF50',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            borderBottom: 'none'
+                        },
+                        '& .MuiDataGrid-columnHeader': {
+                            backgroundColor: '#4CAF50',
+                            color: 'white'
+                        },
+                        '& .MuiDataGrid-columnHeaderTitle': {
+                            fontWeight: 'bold',
+                            color: 'white'
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: '#f5f5f5'
+                        },
+                        '& .MuiDataGrid-footerContainer': {
+                            border: 'none'
+                        },
+                        '& .MuiDataGrid-container--top [role=row], & .MuiDataGrid-container--bottom [role=row]': {
+                            backgroundColor: '#4CAF50'
+                        }
+                    }}
                 />
-            </TableContainer>
-            { selectedEmployee && openViewDialog && <ViewEmployee employee={selectedEmployee} setOpenViewDialog={setOpenViewDialog} />}
-            {selectedEmployee && openDeleteDialog && <DeleteEmployee  employee={selectedEmployee} setOpenDeleteDialog={setOpenDeleteDialog}/>}
-            {selectedEmployee && openEditDialog && <EditEmployee employee={selectedEmployee} setOpenEditDialog={setOpenEditDialog}/>}
-            {openAddDialog && <AddEmployee setOpenAddDialog={setOpenAddDialog}/>}
-        </EmployeesTableWrapper>
-    )
-}
+            </Paper>
 
-export default EmployeesTable
+            {selectedEmployee && openViewDialog && (
+                <ViewEmployee
+                    employee={selectedEmployee}
+                    setOpenViewDialog={setOpenViewDialog}
+                />
+            )}
+            {selectedEmployee && openDeleteDialog && (
+                <DeleteEmployee
+                    employee={selectedEmployee}
+                    setOpenDeleteDialog={setOpenDeleteDialog}
+                />
+            )}
+            {selectedEmployee && openEditDialog && (
+                <EditEmployee
+                    employee={selectedEmployee}
+                    setOpenEditDialog={setOpenEditDialog}
+                />
+            )}
+            {openAddDialog && (
+                <AddEmployee setOpenAddDialog={setOpenAddDialog} />
+            )}
+        </EmployeesTableWrapper>
+    );
+};
+
+export default EmployeesTable;
