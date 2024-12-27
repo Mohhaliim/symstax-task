@@ -24,6 +24,7 @@ const AuthStateHandler = () => {
         );
 
         if (['/login', '/register'].includes(location.pathname)) {
+
           navigate('/');
         }
       } else {
@@ -32,6 +33,7 @@ const AuthStateHandler = () => {
           navigate('/login');
         }
       }
+      console.log('here')
       dispatch(setLoading(false));
     });
 

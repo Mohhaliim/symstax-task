@@ -10,6 +10,7 @@ import {
   limit,
   startAfter,
   where,
+  DocumentData
 } from 'firebase/firestore';
 import { db } from './BaseConfig';
 import { Employee } from '@/types';
@@ -30,22 +31,31 @@ export const addEmployee = async (employee: Omit<Employee, 'id'>) => {
 /*
  *   Firebase get employess function
  */
-export const getEmployees = async (page: number, rowsPerPage: number) => {
+export const getEmployees = async (page: number, rowsPerPage: number, lastDoc?: Employee | DocumentData) => {
   try {
-    const first = query(
+    const totalCount = (await getDocs(collection(db, 'employees'))).size;
+
+    let employeesQuery = query(
       collection(db, 'employees'),
       orderBy('name'),
-      startAfter(page * rowsPerPage),
       limit(rowsPerPage)
     );
-    const documentSnapshots = await getDocs(first);
+
+    if (page !== 0 && lastDoc) {
+      employeesQuery = query(
+        collection(db, 'employees'),
+        orderBy('name'),
+        startAfter(lastDoc.name),
+        limit(rowsPerPage)
+      );
+    }
+
+    const documentSnapshots = await getDocs(employeesQuery);
 
     const employees = documentSnapshots.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as Employee[];
-
-    const totalCount = (await getDocs(collection(db, 'employees'))).size;
 
     return { employees, totalCount };
   } catch (error) {

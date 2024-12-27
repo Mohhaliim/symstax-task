@@ -32,7 +32,7 @@ const StyledError = styled.div`
 
 const SubmitButton = styled.button`
   padding: 10px 20px;
-  background-color: #007bff;
+  background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 4px;
@@ -46,7 +46,7 @@ const SubmitButton = styled.button`
 
 const RegisterLink = styled.a`
   padding: 10px 20px;
-  background-color: #007bff;
+  background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 4px;
